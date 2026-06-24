@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trốn Thoát Khỏi Mei Hoàng</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        body {
+            background: #1a1a1e;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            overflow: hidden;
+            padding-top: 10px;
+        }
+        #header {
+            text-align: center;
+            margin-bottom: 8px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+        .stat-box {
+            background: #252530;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #3f444a;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        #lblLives {
+            color: #ff4757;
+            font-size: 15px;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 4px solid #5b61d6;
+        }
+        canvas {
+            background: #fffdf6;
+            display: block;
+        }
+        #msgOverlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 15, 20, 0.94);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 9999;
+        }
+        #msgOverlay.hide { display: none !important; }
+        #msgOverlay h2 { font-size: 26px; margin-bottom: 12px; color: #ff4757; text-shadow: 0 2px 5px rgba(0,0,0,0.6); font-weight: 800; }
+        #msgOverlay p { font-size: 14px; margin-bottom: 25px; color: #ccc; line-height: 1.4; padding: 0 10px; }
+        #btnStart {
+            background: linear-gradient(135deg, #5b61d6, #8f94fb);
+            color: white; border: none;
+            padding: 15px 45px; font-size: 16px; font-weight: bold;
+            border-radius: 25px; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(91, 97, 214, 0.4);
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* KHU VỰC NÚT ĐIỀU KHIỂN */
+        #controller {
+            margin-top: 15px;
+            width: 170px;
+            height: 170px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-dir {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-radius: 50%;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.4);
+            cursor: pointer;
+        }
+        .btn-dir:active {
+            background: #8f94fb;
+            border-color: #fff;
+        }
+        #btnUp    { top: 0; left: 57px; }
+        #btnDown  { bottom: 0; left: 57px; }
+        #btnLeft  { left: 0; top: 57px; }
+        #btnRight { right: 0; top: 57px; }
+        
+        #centerCore {
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        #credit {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #888;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #hiddenVideo { display: none; }
+    </style>
+</head>
+<body>
+
+    <video id="hiddenVideo" src="quby_walk.mp4" loop muted playsinline></video>
+
+    <div id="header">
+        <div class="stat-box" id="lblLevel">LV: 1 / 50</div>
+        <div class="stat-box" id="lblLives">MẠNG: ❤️❤️</div>
+        <div class="stat-box" id="lblScore">Điểm: 0 / 10</div>
+    </div>
+
+    <div id="gameContainer">
+        <canvas id="ctxCanvas" width="600" height="600"></canvas>
+        <div id="msgOverlay">
+            <h2 id="stateTitle">TRỐN THOÁT KHỎI MEI HOÀNG</h2>
+            <p id="stateDesc">Né tránh các bản sao Quby đang đi tuần tra toàn map! Ăn hết chấm vàng để qua màn. Càng lên cao số lượng quái càng đông.</p>
+            <button id="btnStart">BẮT ĐẦU CHƠI</button>
+        </div>
+    </div>
+
+    <div id="controller">
+        <div id="centerCore"></div>
+        <div class="btn-dir" id="btnUp">▲</div>
+        <div class="btn-dir" id="btnLeft">◀</div>
+        <div class="btn-dir" id="btnRight">▶</div>
+        <div class="btn-dir" id="btnDown">▼</div>
+    </div>
+
+    <div id="credit">game by meihoang2004</div>
+
+<script>
+    const canvas = document.getElementById("ctxCanvas");
+    const ctx = canvas.getContext("2d");
+    
+    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingQuality = 'high';
+
+    const lblLevel = document.getElementById("lblLevel");
+    const lblScore = document.getElementById("lblScore");
+    const lblLives = document.getElementById("lblLives");
+    const msgOverlay = document.getElementById("msgOverlay");
+    const stateTitle = document.getElementById("stateTitle");
+    const stateDesc = document.getElementById("stateDesc");
+    const btnStart = document.getElementById("btnStart");
+    const videoEnemy = document.getElementById("hiddenVideo");
+
+    const imgPlayer = new Image();
+    imgPlayer.src = "quby.png"; 
+
+    let currentLevel = 1;
+    const maxLevels = 50;
+    let gridRows = 19; 
+    let gridCols = 19;
+    let tileSize = canvas.width / gridCols;
+    
+    let maze = [];
+    let dots = [];
+    let player = { x: 1, y: 1 };
+    let enemies = [];
+    
+    let score = 0;
+    let targetScore = 10;
+    let lives = 2; 
+    let isPlaying = false;
+    let enemySpeedInterval = 450; 
+    let enemyVisionRadius = 5; 
+
+    let moveIntervalId = null;
+
+    function generateMaze(rows, cols) {
+        let grid = [];
+        for (let r = 0; r < rows; r++) {
+            grid[r] = new Array(cols).fill(1); 
+        }
+
+        function carve(r, c) {
+            grid[r][c] = 0;
+            const dirs = [[-2, 0], [2, 0], [0, -2], [0, 2]].sort(() => Math.random() - 0.5);
+            
+            for (let [dr, dc] of dirs) {
+                let nr = r + dr, nc = c + dc;
+                if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 && grid[nr][nc] === 1) {
+                    grid[r + dr/2][c + dc/2] = 0;
+                    carve(nr, nc);
+                }
+            }
+        }
+        carve(1, 1);
+
+        grid[1][0] = 0; grid[1][cols-1] = 0;
+        grid[rows-2][0] = 0; grid[rows-2][cols-1] = 0;
+        grid[0][1] = 0; grid[rows-1][1] = 0;
+        grid[0][cols-2] = 0; grid[rows-1][cols-2] = 0;
+
+        return grid;
+    }
+
+    function getRandomSafeTile(availableTiles, minDist = 5) {
+        if (!availableTiles || availableTiles.length === 0) {
+            return { x: gridCols - 2, y: gridRows - 2 };
+        }
+        
+        for (let i = 0; i < availableTiles.length; i++) {
+            let tile = availableTiles[i];
+            let dist = Math.abs(tile.x - player.x) + Math.abs(tile.y - player.y);
+            if (dist > minDist) {
+                availableTiles.splice(i, 1);
+                return tile;
+            }
+        }
+        
+        for (let i = 0; i < availableTiles.length; i++) {
+            let tile = availableTiles[i];
+            let dist = Math.abs(tile.x - player.x) + Math.abs(tile.y - player.y);
+            if (dist > 2) {
+                availableTiles.splice(i, 1);
+                return tile;
+            }
+        }
+        
+        return availableTiles.pop();
+    }
+
+    function updateLivesUI() {
+        let heartString = "";
+        for(let i=0; i<lives; i++) { heartString += "❤️"; }
+        if(heartString === "") heartString = "❌ HẾT MẠNG";
+        lblLives.innerText = `MẠNG: ${heartString}`;
+    }
+
+    function initLevel() {
+        gridRows = 19; 
+        gridCols = 19;
+        tileSize = canvas.width / gridCols;
+        maze = generateMaze(gridRows, gridCols);
+        
+        player.x = 1; player.y = 1;
+        score = 0;
+
+        targetScore = 8 + currentLevel * 2; 
+        enemySpeedInterval = Math.max(160, 450 - (currentLevel * 12)); 
+        enemyVisionRadius = 5 + Math.floor(currentLevel / 4); 
+
+        let availableTiles = [];
+        for (let r = 1; r < gridRows - 1; r++) {
+            for (let c = 1; c < gridCols - 1; c++) {
+                if (maze[r][c] === 0 && !(r === 1 && c === 1)) {
+                    availableTiles.push({x: c, y: r});
+                }
+            }
+        }
+        availableTiles.sort(() => Math.random() - 0.5);
+
+        let enemyCount = 1;
+        if (currentLevel >= 5 && currentLevel < 10) enemyCount = 2;
+        if (currentLevel >= 10) enemyCount = 3;
+
+        enemies = [];
+        for (let i = 0; i < enemyCount; i++) {
+            let spawnTile = getRandomSafeTile(availableTiles, 4);
+            enemies.push({
+                x: spawnTile.x,
+                y: spawnTile.y,
+                dx: 0, 
+                dy: 1, 
+                lastMoveTime: 0
+            });
+        }
+
+        dots = [];
+        let dotsToSpawn = Math.min(targetScore, availableTiles.length);
+        for(let i = 0; i < dotsToSpawn; i++) {
+            dots.push({ x: availableTiles[i].x, y: availableTiles[i].y, active: true });
+        }
+        targetScore = dotsToSpawn; 
+
+        lblLevel.innerText = `LV: ${currentLevel} / ${maxLevels}`;
+        lblScore.innerText = `Điểm: ${score} / ${targetScore}`;
+        updateLivesUI();
+
+        videoEnemy.play().catch(err => console.log("Chờ tương tác mở khoá video"));
+    }
+
+    function handlePlayerHit() {
+        lives--;
+        updateLivesUI();
+
+        if (lives <= 0) {
+            endGame(false, `Bị bắt tại Level ${currentLevel}! Hết sạch trái tim rồi bro.`);
+        } else {
+            player.x = 1;
+            player.y = 1;
+            
+            let safetyTiles = [];
+            for (let r = 1; r < gridRows - 1; r++) {
+                for (let c = 1; c < gridCols - 1; c++) {
+                    if (maze[r][c] === 0 && !(r === 1 && c === 1)) {
+                        safetyTiles.push({x: c, y: r});
+                    }
+                }
+            }
+            safetyTiles.sort(() => Math.random() - 0.5);
+
+            for (let enemy of enemies) {
+                let spawnTile = getRandomSafeTile(safetyTiles, 5);
+                enemy.x = spawnTile.x;
+                enemy.y = spawnTile.y;
+                enemy.dx = 0;
+                enemy.dy = 1;
+                enemy.lastMoveTime = 0;
+            }
+            stopContinuousMove(); 
+        }
+    }
+
+    function moveSingleEnemy(enemy) {
+        let dist = Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
+
+        if (dist <= enemyVisionRadius) {
+            let queue = [[enemy.x, enemy.y, []]];
+            let visited = Array.from({ length: gridRows }, () => new Array(gridCols).fill(false));
+            visited[enemy.y][enemy.x] = true;
+            let pathFound = [];
+
+            while (queue.length > 0) {
+                let [cx, cy, path] = queue.shift();
+
+                if (cx === player.x && cy === player.y) {
+                    pathFound = path;
+                    break;
+                }
+
+                const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+                for (let [dx, dy] of dirs) {
+                    let nx = cx + dx, ny = cy + dy;
+                    if (nx < 0) nx = gridCols - 1;
+                    if (nx >= gridCols) nx = 0;
+                    if (ny < 0) ny = gridRows - 1;
+                    if (ny >= gridRows) ny = 0;
+
+                    if (maze[ny] && maze[ny][nx] === 0 && !visited[ny][nx]) {
+                        visited[ny][nx] = true;
+                        queue.push([nx, ny, [...path, {x: nx, y: ny}]]);
+                    }
+                }
+            }
+
+            if (pathFound.length > 0) {
+                enemy.dx = pathFound[0].x - enemy.x;
+                enemy.dy = pathFound[0].y - enemy.y;
+                enemy.x = pathFound[0].x;
+                enemy.y = pathFound[0].y;
+            }
+            return;
+        }
+
+        let nextX = enemy.x + enemy.dx;
+        let nextY = enemy.y + enemy.dy;
+
+        if (nextX < 0) nextX = gridCols - 1;
+        if (nextX >= gridCols) nextX = 0;
+        if (nextY < 0) nextY = gridRows - 1;
+        if (nextY >= gridRows) nextY = 0;
+
+        if ((enemy.dx !== 0 || enemy.dy !== 0) && maze[nextY] && maze[nextY][nextX] === 0 && Math.random() > 0.15) {
+            enemy.x = nextX;
+            enemy.y = nextY;
+        } else {
+            const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+            let validMoves = [];
+
+            for (let [dx, dy] of dirs) {
+                let nx = enemy.x + dx;
+                let ny = enemy.y + dy;
+
+                if (nx < 0) nx = gridCols - 1;
+                if (nx >= gridCols) nx = 0;
+                if (ny < 0) ny = gridRows - 1;
+                if (ny >= gridRows) ny = 0;
+
+                if (maze[ny] && maze[ny][nx] === 0) {
+                    if (dx === -enemy.dx && dy === -enemy.dy) continue;
+                    validMoves.push({nx, ny, dx, dy});
+                }
+            }
+
+            if (validMoves.length === 0) {
+                let backX = enemy.x - enemy.dx;
+                let backY = enemy.y - enemy.dy;
+                if (backX < 0) backX = gridCols - 1;
+                if (backX >= gridCols) backX = 0;
+                if (backY < 0) backY = gridRows - 1;
+                if (backY >= gridRows) backY = 0;
+
+                if (maze[backY] && maze[backY][backX] === 0) {
+                    enemy.x = backX;
+                    enemy.y = backY;
+                    enemy.dx = -enemy.dx;
+                    enemy.dy = -enemy.dy;
+                }
+            } else {
+                let chosen = validMoves[Math.floor(Math.random() * validMoves.length)];
+                enemy.x = chosen.nx;
+                enemy.y = chosen.ny;
+                enemy.dx = chosen.dx;
+                enemy.dy = chosen.dy;
+            }
+        }
+    }
+
+    function checkCollision() {
+        if (!isPlaying) return false;
+        for (let enemy of enemies) {
+            if (enemy.x === player.x && enemy.y === player.y) {
+                handlePlayerHit();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function tryMovePlayer(dx, dy) {
+        if (!isPlaying) return;
+        let nextX = player.x + dx;
+        let nextY = player.y + dy;
+
+        if (nextX < 0) nextX = gridCols - 1;
+        if (nextX >= gridCols) nextX = 0;
+        if (nextY < 0) nextY = gridRows - 1;
+        if (nextY >= gridRows) nextY = 0;
+
+        if (maze[nextY] && maze[nextY][nextX] === 0) {
+            player.x = nextX;
+            player.y = nextY;
+            
+            for (let dot of dots) {
+                if (dot.active && dot.x === player.x && dot.y === player.y) {
+                    dot.active = false;
+                    score++;
+                    lblScore.innerText = `Điểm: ${score} / ${targetScore}`;
+                    
+                    if (score >= targetScore) {
+                        if (currentLevel >= maxLevels) {
+                            endGame(true, "BẠN ĐÃ PHÁ ĐẢO GAME!");
+                        } else {
+                            currentLevel++;
+                            initLevel();
+                        }
+                        return;
+                    }
+                }
+            }
+            checkCollision();
+        }
+    }
+
+    function endGame(isWin, text) {
+        isPlaying = false;
+        stopContinuousMove();
+        videoEnemy.pause(); 
+        msgOverlay.classList.remove("hide");
+        stateTitle.innerText = isWin ? "CHIẾN THẮNG!" : "GAME OVER";
+        stateDesc.innerText = text;
+        btnStart.innerText = isWin ? "CHƠI TIẾP" : "THỬ LẠI";
+        if(!isWin) currentLevel = 1; 
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let r = 0; r < gridRows; r++) {
+            for (let c = 0; c < gridCols; c++) {
+                if (maze[r][c] === 1) {
+                    ctx.fillStyle = "#2c3e50"; 
+                    ctx.fillRect(c * tileSize, r * tileSize, tileSize + 0.2, tileSize + 0.2);
+                }
+            }
+        }
+
+        for (let dot of dots) {
+            if (dot.active) {
+                ctx.beginPath();
+                ctx.arc((dot.x + 0.5) * tileSize, (dot.y + 0.5) * tileSize, tileSize * 0.23, 0, Math.PI * 2);
+                ctx.fillStyle = "#ffcc00";
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        let p = tileSize * 0.12; 
+        let size = tileSize - p * 2;
+        
+        ctx.drawImage(imgPlayer, player.x * tileSize + p, player.y * tileSize + p, size, size);
+        
+        for (let enemy of enemies) {
+            try {
+                ctx.drawImage(videoEnemy, enemy.x * tileSize + p, enemy.y * tileSize + p, size, size);
+            } catch(e) {
+                // Phương án dự phòng nếu video lỗi chưa load kịp thì vẽ hình vuông đỏ tạm thời
+                ctx.fillStyle = "#ff4757";
+                ctx.fillRect(enemy.x * tileSize + p, enemy.y * tileSize + p, size, size);
+            }
+        }
+    }
+
+    function gameLoop(timestamp) {
+        if (!isPlaying) return;
+
+        for (let enemy of enemies) {
+            if (timestamp - enemy.lastMoveTime > enemySpeedInterval) {
+                moveSingleEnemy(enemy);
+                enemy.lastMoveTime = timestamp;
+            }
+        }
+
+        if (checkCollision()) return;
+
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function startContinuousMove(dx, dy) {
+        if (!isPlaying) return;
+        stopContinuousMove();
+        tryMovePlayer(dx, dy);
+        moveIntervalId = setInterval(() => { tryMovePlayer(dx, dy); }, 150); 
+    }
+
+    function stopContinuousMove() {
+        if (moveIntervalId) { clearInterval(moveIntervalId); moveIntervalId = null; }
+    }
+
+    const setupButton = (elementId, dx, dy) => {
+        const el = document.getElementById(elementId);
+        el.addEventListener("touchstart", (e) => { e.preventDefault(); startContinuousMove(dx, dy); }, {passive: false});
+        el.addEventListener("touchend", () => { stopContinuousMove(); });
+        el.addEventListener("mousedown", () => { startContinuousMove(dx, dy); });
+        el.addEventListener("mouseup", () => { stopContinuousMove(); });
+        el.addEventListener("mouseleave", () => { stopContinuousMove(); });
+    };
+
+    setupButton("btnUp", 0, -1);
+    setupButton("btnDown", 0, 1);
+    setupButton("btnLeft", -1, 0);
+    setupButton("btnRight", 1, 0);
+
+    window.addEventListener("keydown", e => {
+        if (!isPlaying || e.repeat) return;
+        if (e.key === "ArrowUp")    startContinuousMove(0, -1);
+        if (e.key === "ArrowDown")  startContinuousMove(0, 1);
+        if (e.key === "ArrowLeft")  startContinuousMove(-1, 0);
+        if (e.key === "ArrowRight") startContinuousMove(1, 0);
+    });
+
+    window.addEventListener("keyup", e => {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) { stopContinuousMove(); }
+    });
+
+    // SỬA LỖI ĐƠ NÚT BẮT ĐẦU TRÊN ĐIỆN THO
