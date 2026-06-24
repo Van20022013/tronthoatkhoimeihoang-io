@@ -57,25 +57,26 @@
         #msgOverlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 15, 20, 0.92);
+            background: rgba(15, 15, 20, 0.94);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
             text-align: center;
             padding: 20px;
-            z-index: 10;
+            z-index: 9999;
         }
-        #msgOverlay.hide { display: none; }
-        #msgOverlay h2 { font-size: 30px; margin-bottom: 12px; color: #ff4757; text-shadow: 0 2px 5px rgba(0,0,0,0.6); font-weight: 800; }
-        #msgOverlay p { font-size: 15px; margin-bottom: 25px; color: #ccc; }
+        #msgOverlay.hide { display: none !important; }
+        #msgOverlay h2 { font-size: 26px; margin-bottom: 12px; color: #ff4757; text-shadow: 0 2px 5px rgba(0,0,0,0.6); font-weight: 800; }
+        #msgOverlay p { font-size: 14px; margin-bottom: 25px; color: #ccc; line-height: 1.4; padding: 0 10px; }
         #btnStart {
             background: linear-gradient(135deg, #5b61d6, #8f94fb);
             color: white; border: none;
-            padding: 14px 40px; font-size: 16px; font-weight: bold;
+            padding: 15px 45px; font-size: 16px; font-weight: bold;
             border-radius: 25px; cursor: pointer;
             box-shadow: 0 5px 15px rgba(91, 97, 214, 0.4);
+            display: block;
+            margin: 0 auto;
         }
 
         /* KHU VỰC NÚT ĐIỀU KHIỂN */
@@ -103,12 +104,10 @@
             align-items: center;
             box-shadow: 0 5px 12px rgba(0,0,0,0.4);
             cursor: pointer;
-            transition: background 0.1s, transform 0.1s;
         }
         .btn-dir:active {
             background: #8f94fb;
             border-color: #fff;
-            transform: scale(0.9);
         }
         #btnUp    { top: 0; left: 57px; }
         #btnDown  { bottom: 0; left: 57px; }
@@ -149,7 +148,7 @@
         <canvas id="ctxCanvas" width="600" height="600"></canvas>
         <div id="msgOverlay">
             <h2 id="stateTitle">TRỐN THOÁT KHỎI MEI HOÀNG</h2>
-            <p id="stateDesc">Né tránh các bản sao Quby đang đi bộ tuần tra toàn map! Càng lên cao số lượng càng đông.</p>
+            <p id="stateDesc">Né tránh các bản sao Quby đang đi tuần tra toàn map! Ăn hết chấm vàng để qua màn. Càng lên cao số lượng quái càng đông.</p>
             <button id="btnStart">BẮT ĐẦU CHƠI</button>
         </div>
     </div>
@@ -297,8 +296,8 @@
             enemies.push({
                 x: spawnTile.x,
                 y: spawnTile.y,
-                dx: 0, // Hướng đi X ban đầu
-                dy: 1, // Hướng đi Y ban đầu
+                dx: 0, 
+                dy: 1, 
                 lastMoveTime: 0
             });
         }
@@ -314,7 +313,7 @@
         lblScore.innerText = `Điểm: ${score} / ${targetScore}`;
         updateLivesUI();
 
-        videoEnemy.play().catch(err => console.log("Chờ tương tác"));
+        videoEnemy.play().catch(err => console.log("Chờ tương tác mở khoá video"));
     }
 
     function handlePlayerHit() {
@@ -349,11 +348,9 @@
         }
     }
 
-    // NÂNG CẤP THUẬT TOÁN TUẦN TRA KHÔNG BỊ LẶP LẠI MỘT CHỖ
     function moveSingleEnemy(enemy) {
         let dist = Math.abs(enemy.x - player.x) + Math.abs(enemy.y - player.y);
 
-        // 1. CHẾ ĐỘ TRUY ĐUỔI: Nếu người chơi lọt vào tầm nhìn
         if (dist <= enemyVisionRadius) {
             let queue = [[enemy.x, enemy.y, []]];
             let visited = Array.from({ length: gridRows }, () => new Array(gridCols).fill(false));
@@ -384,7 +381,6 @@
             }
 
             if (pathFound.length > 0) {
-                // Cập nhật hướng đi cũ dựa trên bước đi truy đuổi
                 enemy.dx = pathFound[0].x - enemy.x;
                 enemy.dy = pathFound[0].y - enemy.y;
                 enemy.x = pathFound[0].x;
@@ -393,23 +389,18 @@
             return;
         }
 
-        // 2. CHẾ ĐỘ TUẦN TRA THÔNG MINH (Không dí): Ưu tiên đi thẳng, rẽ ngẫu nhiên khi gặp vật cản
         let nextX = enemy.x + enemy.dx;
         let nextY = enemy.y + enemy.dy;
 
-        // Xử lý đi xuyên rìa map nếu có
         if (nextX < 0) nextX = gridCols - 1;
         if (nextX >= gridCols) nextX = 0;
         if (nextY < 0) nextY = gridRows - 1;
         if (nextY >= gridRows) nextY = 0;
 
-        // Kiểm tra xem hướng đi hiện tại có tiếp tục đi được không và không phải đứng im (0,0)
         if ((enemy.dx !== 0 || enemy.dy !== 0) && maze[nextY] && maze[nextY][nextX] === 0 && Math.random() > 0.15) {
-            // 85% cơ hội tiếp tục đi thẳng nếu đường trống để tránh bị đảo hướng liên tục
             enemy.x = nextX;
             enemy.y = nextY;
         } else {
-            // Tìm tất cả các hướng có thể đi được ở ngã rẽ hiện tại
             const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
             let validMoves = [];
 
@@ -423,13 +414,11 @@
                 if (ny >= gridRows) ny = 0;
 
                 if (maze[ny] && maze[ny][nx] === 0) {
-                    // Loại bỏ hướng đi ngược lại ngay lập tức để không bị lặp quay đầu qua lại
                     if (dx === -enemy.dx && dy === -enemy.dy) continue;
                     validMoves.push({nx, ny, dx, dy});
                 }
             }
 
-            // Nếu không có lối đi nào ngoài việc quay đầu (ngõ cụt)
             if (validMoves.length === 0) {
                 let backX = enemy.x - enemy.dx;
                 let backY = enemy.y - enemy.dy;
@@ -445,7 +434,6 @@
                     enemy.dy = -enemy.dy;
                 }
             } else {
-                // Chọn ngẫu nhiên một hướng đi mới từ các ngã rẽ hợp lệ tiến về phía trước
                 let chosen = validMoves[Math.floor(Math.random() * validMoves.length)];
                 enemy.x = chosen.nx;
                 enemy.y = chosen.ny;
@@ -540,7 +528,13 @@
         ctx.drawImage(imgPlayer, player.x * tileSize + p, player.y * tileSize + p, size, size);
         
         for (let enemy of enemies) {
-            ctx.drawImage(videoEnemy, enemy.x * tileSize + p, enemy.y * tileSize + p, size, size);
+            try {
+                ctx.drawImage(videoEnemy, enemy.x * tileSize + p, enemy.y * tileSize + p, size, size);
+            } catch(e) {
+                // Phương án dự phòng nếu video lỗi chưa load kịp thì vẽ hình vuông đỏ tạm thời
+                ctx.fillStyle = "#ff4757";
+                ctx.fillRect(enemy.x * tileSize + p, enemy.y * tileSize + p, size, size);
+            }
         }
     }
 
@@ -583,4 +577,18 @@
     setupButton("btnUp", 0, -1);
     setupButton("btnDown", 0, 1);
     setupButton("btnLeft", -1, 0);
-    setupButton(
+    setupButton("btnRight", 1, 0);
+
+    window.addEventListener("keydown", e => {
+        if (!isPlaying || e.repeat) return;
+        if (e.key === "ArrowUp")    startContinuousMove(0, -1);
+        if (e.key === "ArrowDown")  startContinuousMove(0, 1);
+        if (e.key === "ArrowLeft")  startContinuousMove(-1, 0);
+        if (e.key === "ArrowRight") startContinuousMove(1, 0);
+    });
+
+    window.addEventListener("keyup", e => {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) { stopContinuousMove(); }
+    });
+
+    // SỬA LỖI ĐƠ NÚT BẮT ĐẦU TRÊN ĐIỆN THO
